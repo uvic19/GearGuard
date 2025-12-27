@@ -211,7 +211,7 @@ const Login = () => {
               className={`absolute right-0 flex items-center justify-center flex-col px-10 text-center top-0 h-full w-1/2 transition-transform duration-600 ease-in-out 
                 ${isRightPanelActive ? 'translate-x-[20%]' : 'translate-x-0'}`}
             >
-              <h1 className="font-bold m-0 text-white text-3xl mb-2">Hello, Friend!</h1>
+              <h1 className="font-bold m-0 text-white text-3xl mb-2">Hello, Welcome to GearGuard!</h1>
               <p className="text-sm font-thin leading-5 tracking-[0.5px] my-5 text-[#f1f1f1]">
                 Enter your personal details and start journey with us
               </p>
