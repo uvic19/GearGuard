@@ -1,7 +1,10 @@
+import React, { useState } from 'react'
+import { X, ChevronDown, Save, UserPlus, Trash2 } from 'lucide-react'
+import { useMaintenanceContext } from '../context/MaintenanceContext'
 import { toast } from 'react-toastify'
 
 const TeamDetail = ({ onClose, initialData = null }) => {
-  const { addTeam, updateTeam } = useMaintenanceContext()
+  const { addTeam, updateTeam, deleteTeam } = useMaintenanceContext()
   
   const [formData, setFormData] = useState({
     name: initialData?.name || '',
@@ -38,6 +41,19 @@ const TeamDetail = ({ onClose, initialData = null }) => {
       ...prev,
       members: prev.members.filter(m => m !== memberToRemove)
     }))
+  }
+
+  const handleDelete = async () => {
+    if (!window.confirm('Are you sure you want to delete this team?')) return
+    
+    try {
+      await deleteTeam(initialData.id)
+      toast.success('Team deleted successfully')
+      onClose()
+    } catch (error) {
+      toast.error('Failed to delete team')
+      console.error(error)
+    }
   }
 
   const handleSubmit = async (e) => {
@@ -197,21 +213,35 @@ const TeamDetail = ({ onClose, initialData = null }) => {
           </div>
 
           {/* Footer Actions */}
-          <div className="px-6 py-4 border-t border-border bg-gray-50/50 flex justify-end gap-3">
-            <button
-              type="button"
-              onClick={onClose}
-              className="px-4 py-2 border border-border rounded bg-surface text-text-main hover:bg-gray-50 transition-colors"
-            >
-              Cancel
-            </button>
-            <button
-              type="submit"
-              className="px-4 py-2 bg-primary text-white rounded hover:bg-primary-hover transition-colors shadow-sm flex items-center gap-2"
-            >
-              <Save size={16} />
-              Save Team
-            </button>
+          <div className="px-6 py-4 border-t border-border bg-gray-50/50 flex justify-between gap-3">
+             <div>
+               {initialData && (
+                 <button
+                   type="button"
+                   onClick={handleDelete}
+                   className="px-4 py-2 bg-red-50 text-red-600 border border-red-200 rounded hover:bg-red-100 transition-colors flex items-center gap-2"
+                 >
+                   <Trash2 size={16} />
+                   Delete
+                 </button>
+               )}
+             </div>
+             <div className="flex gap-3">
+                <button
+                  type="button"
+                  onClick={onClose}
+                  className="px-4 py-2 border border-border rounded bg-surface text-text-main hover:bg-gray-50 transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="px-4 py-2 bg-primary text-white rounded hover:bg-primary-hover transition-colors shadow-sm flex items-center gap-2"
+                >
+                  <Save size={16} />
+                  Save Team
+                </button>
+             </div>
           </div>
         </form>
 

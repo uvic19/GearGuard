@@ -15,6 +15,26 @@ const Equipment = () => {
     item.category.toLowerCase().includes(searchTerm.toLowerCase())
   )
 
+  const [sortConfig, setSortConfig] = useState({ key: 'name', direction: 'asc' })
+
+  const handleSort = (key) => {
+    let direction = 'asc'
+    if (sortConfig.key === key && sortConfig.direction === 'asc') {
+      direction = 'desc'
+    }
+    setSortConfig({ key, direction })
+  }
+
+  const sortedEquipment = [...filteredEquipment].sort((a, b) => {
+    if (a[sortConfig.key] < b[sortConfig.key]) {
+      return sortConfig.direction === 'asc' ? -1 : 1
+    }
+    if (a[sortConfig.key] > b[sortConfig.key]) {
+      return sortConfig.direction === 'asc' ? 1 : -1
+    }
+    return 0
+  })
+
   const handleNewEquipment = () => {
     setSelectedEquipment(null)
     setShowForm(true)
@@ -66,31 +86,33 @@ const Equipment = () => {
             <table className="w-full text-sm text-left">
               <thead className="bg-gray-100 text-text-sub font-medium border-b border-border">
                 <tr>
-                  <th className="px-4 py-3">
-                    Equipment Name <ChevronDown size={12} className="inline ml-1"/>
-                  </th>
-                  <th className="px-4 py-3">
-                    Employee <ChevronDown size={12} className="inline ml-1"/>
-                  </th>
-                  <th className="px-4 py-3">
-                    Department <ChevronDown size={12} className="inline ml-1"/>
-                  </th>
-                  <th className="px-4 py-3">
-                    Serial Number <ChevronDown size={12} className="inline ml-1"/>
-                  </th>
-                  <th className="px-4 py-3">
-                    Technician <ChevronDown size={12} className="inline ml-1"/>
-                  </th>
-                  <th className="px-4 py-3">
-                    Equipment Category <ChevronDown size={12} className="inline ml-1"/>
-                  </th>
-                  <th className="px-4 py-3">
-                    Company <ChevronDown size={12} className="inline ml-1"/>
-                  </th>
+                  {[
+                    { key: 'name', label: 'Equipment Name' },
+                    { key: 'employee', label: 'Employee' },
+                    { key: 'department', label: 'Department' },
+                    { key: 'serialNumber', label: 'Serial Number' },
+                    { key: 'technician', label: 'Technician' },
+                    { key: 'category', label: 'Category' },
+                    { key: 'company', label: 'Company' }
+                  ].map(({ key, label }) => (
+                    <th 
+                      key={key} 
+                      className="px-4 py-3 cursor-pointer hover:bg-gray-200 transition-colors select-none"
+                      onClick={() => handleSort(key)}
+                    >
+                      {label} 
+                      {sortConfig.key === key && (
+                        <ChevronDown 
+                          size={12} 
+                          className={`inline ml-1 transition-transform ${sortConfig.direction === 'asc' ? 'rotate-180' : ''}`} 
+                        />
+                      )}
+                    </th>
+                  ))}
                 </tr>
               </thead>
               <tbody className="divide-y divide-border bg-surface">
-                {filteredEquipment.map((item) => (
+                {sortedEquipment.map((item) => (
                   <EquipmentRow 
                     key={item.id} 
                     {...item} 

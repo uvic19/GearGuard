@@ -14,6 +14,30 @@ const Team = () => {
     team.members.some(member => member.toLowerCase().includes(searchTerm.toLowerCase()))
   )
 
+  const [sortConfig, setSortConfig] = useState({ key: 'name', direction: 'asc' })
+
+  const handleSort = (key) => {
+    let direction = 'asc'
+    if (sortConfig.key === key && sortConfig.direction === 'asc') {
+      direction = 'desc'
+    }
+    setSortConfig({ key, direction })
+  }
+
+  const sortedTeams = [...filteredTeams].sort((a, b) => {
+    // Helper to handle array sorting (like members)
+    const valA = Array.isArray(a[sortConfig.key]) ? a[sortConfig.key].length : a[sortConfig.key]
+    const valB = Array.isArray(b[sortConfig.key]) ? b[sortConfig.key].length : b[sortConfig.key]
+
+    if (valA < valB) {
+      return sortConfig.direction === 'asc' ? -1 : 1
+    }
+    if (valA > valB) {
+      return sortConfig.direction === 'asc' ? 1 : -1
+    }
+    return 0
+  })
+
   const handleNewTeam = () => {
     setSelectedTeam(null)
     setShowForm(true)
@@ -48,13 +72,29 @@ const Team = () => {
             <table className="w-full text-sm text-left">
               <thead className="bg-gray-100 text-text-sub font-medium border-b border-border">
                 <tr>
-                  <th className="px-4 py-3 w-1/3">Team Name</th>
-                  <th className="px-4 py-3 w-1/3">Team Members</th>
-                  <th className="px-4 py-3 w-1/3">Company</th>
+                  {[
+                    { key: 'name', label: 'Team Name', width: 'w-1/3' },
+                    { key: 'members', label: 'Team Members', width: 'w-1/3' },
+                    { key: 'company', label: 'Company', width: 'w-1/3' }
+                  ].map(({ key, label, width }) => (
+                    <th 
+                      key={key} 
+                      className={`px-4 py-3 ${width} cursor-pointer hover:bg-gray-200 transition-colors select-none`}
+                      onClick={() => handleSort(key)}
+                    >
+                      {label}
+                      {sortConfig.key === key && (
+                        <ChevronDown 
+                          size={12} 
+                          className={`inline ml-1 transition-transform ${sortConfig.direction === 'asc' ? 'rotate-180' : ''}`} 
+                        />
+                      )}
+                    </th>
+                  ))}
                 </tr>
               </thead>
               <tbody className="divide-y divide-border bg-surface">
-                {filteredTeams.map((team) => (
+                {sortedTeams.map((team) => (
                   <TeamRow 
                     key={team.id} 
                     {...team} 

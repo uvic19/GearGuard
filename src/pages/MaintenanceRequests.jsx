@@ -6,7 +6,7 @@ import MaintenanceRequest from './MaintenanceRequest'
 import { useSearchParams } from 'react-router-dom'
 
 const MaintenanceRequests = () => {
-  const { requests, moveRequestToStage, isOverdue } = useMaintenanceContext()
+  const { requests, teams, moveRequestToStage, isOverdue } = useMaintenanceContext()
   const [showForm, setShowForm] = useState(false)
   const [selectedRequest, setSelectedRequest] = useState(null)
   const [searchParams] = useSearchParams()
@@ -103,10 +103,10 @@ const MaintenanceRequests = () => {
                 onChange={(e) => setFilterTeam(e.target.value)}
                 className="pl-3 pr-8 py-1.5 border border-border rounded bg-surface focus:outline-none focus:ring-1 focus:ring-primary appearance-none"
               >
-                <option>All Teams</option>
-                <option>Internal Maintenance</option>
-                <option>Metrology</option>
-                <option>Subcontractor</option>
+                <option value="All">All Teams</option>
+                {teams.map(team => (
+                  <option key={team.id} value={team.name}>{team.name}</option>
+                ))}
               </select>
               <ChevronDown className="absolute right-2 top-1/2 -translate-y-1/2 text-text-sub pointer-events-none" size={16} />
             </div>
