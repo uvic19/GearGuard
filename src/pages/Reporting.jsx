@@ -1,11 +1,11 @@
-import React from 'react'
+import React, { useMemo } from 'react'
 import { 
-  BarChart2, 
-  PieChart, 
+  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer,
+  PieChart, Pie, Cell, AreaChart, Area
+} from 'recharts'
+import { 
   TrendingUp, 
-  Download, 
   Filter, 
-  Calendar,
   CheckCircle,
   Clock,
   AlertCircle
@@ -18,6 +18,54 @@ const Reporting = () => {
   
   // Get recent requests for process tracker
   const trackerRequests = requests.slice(0, 10)
+
+  // --- Chart Data Preparation ---
+  const chartData = useMemo(() => {
+    // 1. Status Distribution (Bar Chart)
+    const statusData = ['New', 'In Progress', 'Repaired', 'Scrap'].map(stage => ({
+        name: stage,
+        count: requests.filter(r => r.stage === stage).length
+    }))
+
+    // 2. Technician Workload (Pie Chart)
+    const techData = requests.reduce((acc, curr) => {
+        if (!curr.technician) return acc
+        const existing = acc.find(item => item.name === curr.technician)
+        if (existing) {
+          existing.value += 1
+        } else {
+          acc.push({ name: curr.technician, value: 1 })
+        }
+        return acc
+    }, [])
+
+    // 3. Trends (Area Chart) - Group by Request Date
+    const trendMap = requests.reduce((acc, curr) => {
+        const date = curr.request_date 
+        // Simple aggregation
+        acc[date] = (acc[date] || 0) + 1
+        return acc
+    }, {})
+    
+    const trendData = Object.keys(trendMap)
+        .sort((a, b) => new Date(a) - new Date(b))
+        .map(date => ({
+            date: new Date(date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+            requests: trendMap[date]
+        }))
+
+    // 4. Priority Breakdown (Bar Chart)
+    const priorityData = [
+        { name: 'Low (1)', value: requests.filter(r => r.priority === 1).length, color: '#4ade80' },
+        { name: 'Medium (2)', value: requests.filter(r => r.priority === 2).length, color: '#facc15' },
+        { name: 'High (3)', value: requests.filter(r => r.priority === 3).length, color: '#f87171' }
+    ]
+
+    return { statusData, techData, trendData, priorityData }
+  }, [requests])
+
+  const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884d8'];
+
   return (
     <div className="w-full min-h-screen flex flex-col font-sans text-text-main bg-background">
       
@@ -56,6 +104,98 @@ const Reporting = () => {
             color="red"
           />
         </div>
+
+        {/* Charts Section */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6 h-80">
+            {/* 1. Request Volume Trend */}
+            <div className="bg-surface border border-border rounded-lg shadow-sm p-4 flex flex-col xl:col-span-2">
+                <h3 className="font-semibold text-text-main mb-4">Request Volume Trends</h3>
+                <div className="flex-1 w-full min-h-0">
+                    <ResponsiveContainer width="100%" height="100%">
+                        <AreaChart data={chartData.trendData}>
+                            <defs>
+                                <linearGradient id="colorRequests" x1="0" y1="0" x2="0" y2="1">
+                                    <stop offset="5%" stopColor="#8884d8" stopOpacity={0.8}/>
+                                    <stop offset="95%" stopColor="#8884d8" stopOpacity={0}/>
+                                </linearGradient>
+                            </defs>
+                            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#eee" />
+                            <XAxis dataKey="date" tick={{fontSize: 12}} />
+                            <YAxis allowDecimals={false} tick={{fontSize: 12}} />
+                            <Tooltip 
+                                contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
+                            />
+                            <Area type="monotone" dataKey="requests" stroke="#8884d8" fillOpacity={1} fill="url(#colorRequests)" />
+                        </AreaChart>
+                    </ResponsiveContainer>
+                </div>
+            </div>
+
+            {/* 2. Requests by Status */}
+            <div className="bg-surface border border-border rounded-lg shadow-sm p-4 flex flex-col">
+                <h3 className="font-semibold text-text-main mb-4">Requests by Status</h3>
+                <div className="flex-1 w-full min-h-0">
+                     <ResponsiveContainer width="100%" height="100%">
+                        <BarChart data={chartData.statusData} layout="vertical">
+                            <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#eee" />
+                            <XAxis type="number" allowDecimals={false} hide />
+                            <YAxis dataKey="name" type="category" width={80} tick={{fontSize: 11}} />
+                            <Tooltip cursor={{fill: 'transparent'}} />
+                            <Bar dataKey="count" fill="#4ade80" radius={[0, 4, 4, 0]} barSize={20} />
+                        </BarChart>
+                     </ResponsiveContainer>
+                </div>
+            </div>
+        </div>
+
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 h-80">
+             {/* 3. Technician Workload */}
+             <div className="bg-surface border border-border rounded-lg shadow-sm p-4 flex flex-col">
+                <h3 className="font-semibold text-text-main mb-4">Technician Workload</h3>
+                <div className="flex-1 w-full min-h-0">
+                    <ResponsiveContainer width="100%" height="100%">
+                        <PieChart>
+                            <Pie
+                                data={chartData.techData}
+                                cx="50%"
+                                cy="50%"
+                                innerRadius={60}
+                                outerRadius={80}
+                                paddingAngle={5}
+                                dataKey="value"
+                            >
+                                {chartData.techData.map((entry, index) => (
+                                    <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                                ))}
+                            </Pie>
+                            <Tooltip />
+                            <Legend verticalAlign="bottom" height={36}/>
+                        </PieChart>
+                    </ResponsiveContainer>
+                </div>
+            </div>
+            
+            {/* 4. Request Priority Breakdown */}
+            <div className="bg-surface border border-border rounded-lg shadow-sm p-4 flex flex-col lg:col-span-2">
+                <h3 className="font-semibold text-text-main mb-4">Requests by Priority</h3>
+                <div className="flex-1 w-full min-h-0">
+                    <ResponsiveContainer width="100%" height="100%">
+                        <BarChart data={chartData.priorityData}>
+                            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#eee" />
+                            <XAxis dataKey="name" tick={{fontSize: 12}} />
+                            <YAxis allowDecimals={false} tick={{fontSize: 12}} />
+                            <Tooltip cursor={{fill: 'transparent'}} />
+                            <Bar dataKey="value" name="Requests" radius={[4, 4, 0, 0]} barSize={40}>
+                                {chartData.priorityData.map((entry, index) => (
+                                    <Cell key={`cell-${index}`} fill={entry.color} />
+                                ))}
+                            </Bar>
+                        </BarChart>
+                    </ResponsiveContainer>
+                </div>
+            </div>
+        </div>
+
 
         {/* Process Tracking Table */}
         <div className="bg-surface border border-border rounded-lg shadow-sm overflow-hidden">
