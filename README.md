@@ -67,6 +67,9 @@ Since the project is pre-configured for the hackathon explanation, you can simpl
 
 ---
 
+
+
 ## 📄 License
 
 This project is licensed under the MIT License.
+Made for the Odoo x Adani University Hackathon
